@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
+import axios from "axios";
 
 const Home = () => {
     const [page, setPage] = useState('orders');
-    const [username, setUsername] = useState('blablabla');
-    const [password, setPassword] = useState('12345678');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    let email = '';
+
+    axios.post("http://localhost:3001/")
+        .then(res => {
+            console.log(res.data.user)
+            setUsername(res.data.user.username);
+            email = res.data.user.email;
+            setPassword(res.data.user.password);
+        })
+        .catch(err => console.log(err));
 
     const changeUsername = () => {
         alert('Username has been changed');
@@ -35,15 +46,15 @@ const Home = () => {
                 {page === 'profile' ? (
                     <div className="bg-white p-3 rounded-bottom">
                         <h1>Profile</h1>
-                        <div><span className='fw-bold'>Email: </span>example@gmail.com</div>
+                        <div><span className='fw-bold'>Email: </span>{email}</div>
                         <div>
                             <label className="fw-bold">Username: </label>
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                id="email"
-                                name="email"
+                                id="username"
+                                name="username"
                                 className="form-control mb-3"
                             />
                             <button className="btn btn-secondary mb-3" onClick={changeUsername}>
