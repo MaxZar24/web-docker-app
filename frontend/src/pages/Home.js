@@ -1,16 +1,76 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
+import axios from "axios";
 
 const Home = () => {
-    const [page, setPage] = useState('orders');
-    const [username, setUsername] = useState('blablabla');
-    const [password, setPassword] = useState('12345678');
+    const [page, setPage] = useState('profile');
+    const [userData, setUserData] = useState({
+        username: '',
+        email: '',
+        password: ''
+    });
 
-    const changeUsername = () => {
-        alert('Username has been changed');
+
+    const storedUserData = sessionStorage.getItem('user');
+
+    useEffect(() => {
+        if (storedUserData) {
+            const parsedUserData = JSON.parse(storedUserData);
+            setUserData(parsedUserData);
+        }
+    }, [storedUserData]);
+
+    const usernameHandler = (event) => {
+        setUserData((prevState) => {
+            return {
+                ...prevState,
+                username: event.target.value
+            };
+        });
     };
 
-    const changePassword = () => {
-        alert('Password has been changed');
+
+    const passwordHandler = (event) => {
+        setUserData((prevState) => {
+            return {
+                ...prevState,
+                password: event.target.value
+            };
+        });
+    };
+
+
+    const changeUsername = async () => {
+        try {
+            const response = await axios.post('/change-username', {
+                email: userData.email,
+                username: userData.username,
+            });
+
+
+            if (response.status === 200) {
+                sessionStorage.setItem('user', JSON.stringify(userData));
+                alert('Username has been changed');
+            }
+
+        } catch (error) {
+            console.error('Error changing username:', error.message);
+        }
+    };
+
+    const changePassword = async () => {
+        try {
+            const response = await axios.post('/change-password', {
+                email: userData.email, // Assuming you have a unique user ID
+                password: userData.password,
+            });
+
+            if (response.status === 200) {
+                sessionStorage.setItem('user', JSON.stringify(userData));
+                alert('Password has been changed');
+            }
+        } catch (error) {
+            console.error('Error changing password:', error.message);
+        }
     };
 
     return (
@@ -35,15 +95,15 @@ const Home = () => {
                 {page === 'profile' ? (
                     <div className="bg-white p-3 rounded-bottom">
                         <h1>Profile</h1>
-                        <div><span className='fw-bold'>Email: </span>example@gmail.com</div>
+                        <div><span className='fw-bold'>Email: </span>{userData.email}</div>
                         <div>
                             <label className="fw-bold">Username: </label>
                             <input
                                 type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                id="email"
-                                name="email"
+                                value={userData.username}
+                                onChange={usernameHandler}
+                                id="newUsername"
+                                name="newUsername"
                                 className="form-control mb-3"
                             />
                             <button className="btn btn-secondary mb-3" onClick={changeUsername}>
@@ -54,10 +114,10 @@ const Home = () => {
                             <label className="fw-bold">Password: </label>
                             <input
                                 type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                id="password"
-                                name="password"
+                                value={userData.password}
+                                onChange={passwordHandler}
+                                id="newPassword"
+                                name="newPassword"
                                 className="form-control mb-3"
                             />
                             <button className="btn btn-secondary mb-2" onClick={changePassword}>
