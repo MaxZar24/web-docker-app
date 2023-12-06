@@ -17,6 +17,7 @@ const Login = () => {
 
         try {
             const response = await axios.post('/login', formData);
+            console.log((response.data.user));
 
             if (response.status === 200) {
                 console.log(response.data.message);

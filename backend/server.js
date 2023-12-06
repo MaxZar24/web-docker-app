@@ -4,8 +4,8 @@ const oracledb = require('oracledb')
 const app = express()
 
 const dbConfig = {
-    user: 'mkr',
-    password: '2404',
+    user: 'test',
+    password: '1',
     connectString: 'localhost:1521',
 };
 
@@ -71,6 +71,53 @@ app.post('/login', async (req, res) => {
 );
 
 
+app.post('/change-username', async (req, res) => {
+    let {email, username} = req.body;
+
+    try {
+        const connection = await oracledb.getConnection(dbConfig);
+        const updateResult = await connection.execute(
+            `UPDATE users SET username = :username WHERE email = :email`,
+            {username, email},
+            { autoCommit: true }
+        );
+
+        if (updateResult.rowsAffected > 0) {
+            res.status(200).json({message: 'Username successfully updated'});
+        } else {
+            res.status(404).json({error: 'User not found'});
+        }
+
+        await connection.close();
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.post('/change-password', async (req, res) => {
+    let {email, password} = req.body;
+
+    try {
+        const connection = await oracledb.getConnection(dbConfig);
+        const updateResult = await connection.execute(
+            `UPDATE users SET password = :password WHERE email = :email`,
+            {password, email},
+            { autoCommit: true }
+        );
+
+        if (updateResult.rowsAffected > 0) {
+            res.status(200).json({message: 'Password successfully updated'});
+        } else {
+            res.status(404).json({error: 'User not found'});
+        }
+
+        await connection.close();
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 app.listen(3001, () => {
     console.log("Server started success on port 3001")
