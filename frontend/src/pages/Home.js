@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from "react-router-dom";
 import axios from "axios";
 
 const Home = () => {
@@ -8,6 +9,7 @@ const Home = () => {
         email: '',
         password: ''
     });
+    const navigate = useNavigate();
 
 
     const storedUserData = sessionStorage.getItem('user');
@@ -16,6 +18,8 @@ const Home = () => {
         if (storedUserData) {
             const parsedUserData = JSON.parse(storedUserData);
             setUserData(parsedUserData);
+        } else {
+            navigate('/login');
         }
     }, [storedUserData]);
 
