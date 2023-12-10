@@ -1,13 +1,24 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const oracledb = require('oracledb')
+const mongoose = require('mongoose');
+const Order = require("./models");
+
 const app = express()
+
+const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryWrites=true&w=majority';
 
 const dbConfig = {
     user: 'test',
     password: '1',
     connectString: 'localhost:1521',
 };
+
+mongoose
+    .connect(url)
+    .then(() => console.log('DB ok'))
+    .catch((err) => console.log('DB error', err));
+
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -79,7 +90,7 @@ app.post('/change-username', async (req, res) => {
         const updateResult = await connection.execute(
             `UPDATE users SET username = :username WHERE email = :email`,
             {username, email},
-            { autoCommit: true }
+            {autoCommit: true}
         );
 
         if (updateResult.rowsAffected > 0) {
@@ -103,7 +114,7 @@ app.post('/change-password', async (req, res) => {
         const updateResult = await connection.execute(
             `UPDATE users SET password = :password WHERE email = :email`,
             {password, email},
-            { autoCommit: true }
+            {autoCommit: true}
         );
 
         if (updateResult.rowsAffected > 0) {
@@ -118,6 +129,83 @@ app.post('/change-password', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+
+app.get("/get-orders", async (req, res) => {
+    try {
+        const userEmail = req.body.user;
+
+        if (!userEmail) {
+            return res.status(400).json({message: "Email is not specified"});
+        }
+
+        const orders = await Order.find({user: userEmail});
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+
+app.post('/create-order', async (req, res) => {
+    try {
+        const {name, date, category, price, amount, user} = req.body;
+
+        const newOrder = await Order.create({
+            name,
+            date,
+            category,
+            price,
+            amount,
+            user
+        });
+
+        res.status(201).json(newOrder);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+});
+
+app.patch('/update-order/:id', async (req, res) => {
+    const orderId = req.params.id;
+
+    try {
+        const {name, date, category, price, amount, user} = req.body;
+
+        const newOrder = await Order.updateOne({
+            _id: orderId,
+        }, {
+            name,
+            date,
+            category,
+            price,
+            amount,
+            user
+        });
+
+        res.status(201).json(newOrder);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+});
+
+
+app.delete("/remove-order/:id", async (req, res) => {
+    const orderId = req.params.id;
+
+    try {
+        const deletedOrder = await Order.findOneAndDelete({_id: orderId});
+
+        if (!deletedOrder) {
+            return res.status(404).json({message: "Order not found"});
+        }
+
+        res.json({message: "The order was successfully deleted", deletedOrder});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: error.message});
+    }
+});
+
 
 app.listen(3001, () => {
     console.log("Server started success on port 3001")
