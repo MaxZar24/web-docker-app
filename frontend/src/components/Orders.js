@@ -1,4 +1,29 @@
-export default function Orders () {
+import {useState, useEffect} from "react";
+import axios from "axios";
+
+export default function Orders({user}) {
+    const [orders, setOrders] = useState([]);
+
+    useEffect(() => {
+            const fetchData = async () => {
+                console.log(user);
+                try {
+                    const response = await axios.get('/get-orders', {
+                        params: {
+                            user: user,
+                        },
+                    });
+                    setOrders(response.data);
+                    console.log(response.data);
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
+            }
+            fetchData();
+        }, []
+    )
+
+
     return (
         <div className="bg-white p-3 rounded-bottom">
             <h1>Orders</h1>

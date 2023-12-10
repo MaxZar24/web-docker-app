@@ -133,7 +133,7 @@ app.post('/change-password', async (req, res) => {
 
 app.get("/get-orders", async (req, res) => {
     try {
-        const userEmail = req.body.user;
+        const userEmail = req.query.user;
 
         if (!userEmail) {
             return res.status(400).json({message: "Email is not specified"});
