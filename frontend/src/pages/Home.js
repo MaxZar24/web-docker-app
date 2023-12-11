@@ -79,6 +79,7 @@ const Home = () => {
         }
     };
 
+
     return (
         <div className="d-flex flex-column justify-content-center align-items-center bg-secondary vh-100">
             <div>

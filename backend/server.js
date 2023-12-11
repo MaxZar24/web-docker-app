@@ -3,14 +3,15 @@ const bodyParser = require('body-parser')
 const oracledb = require('oracledb')
 const mongoose = require('mongoose');
 const Order = require("./models");
+const cors = require('cors');
 
 const app = express()
 
 const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryWrites=true&w=majority';
 
 const dbConfig = {
-    user: 'test',
-    password: '1',
+    user: 'mkr',
+    password: '2404',
     connectString: 'localhost:1521',
 };
 
@@ -140,7 +141,7 @@ app.get("/get-orders", async (req, res) => {
         }
 
         const orders = await Order.find({user: userEmail});
-        res.json(orders);
+        res.json({userEmail, orders});
     } catch (error) {
         res.status(500).json({message: error.message});
     }
@@ -161,7 +162,8 @@ app.post('/create-order', async (req, res) => {
 
         res.status(201).json(newOrder);
     } catch (error) {
-        res.status(500).json({message: error.message});
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
