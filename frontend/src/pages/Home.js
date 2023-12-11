@@ -104,7 +104,7 @@ const Home = () => {
                              passwordHandler={passwordHandler} changePassword={changePassword}
                     />
                 ) : (
-                    <Orders user={userData.email} />
+                    <Orders userEmail={userData.email} />
                 )}
             </div>
 

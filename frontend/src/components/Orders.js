@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/Orders.css";
 
-export default function Orders({ user }) {
+export default function Orders({ userEmail }) {
     const [orders, setOrders] = useState([]);
-    const [userEmail, setUserEmail] = useState("");
     const [newOrder, setNewOrder] = useState({
         name: "",
         date: "",
@@ -19,11 +18,10 @@ export default function Orders({ user }) {
             try {
                 const response = await axios.get("/get-orders", {
                     params: {
-                        user: user,
+                        user: userEmail,
                     },
                 });
                 setOrders(response.data.orders);
-                setUserEmail(response.data.userEmail);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -33,9 +31,7 @@ export default function Orders({ user }) {
 
     const handleDelete = async (orderId) => {
         try {
-            const response = await fetch(`/remove-order/${orderId}`, {
-                method: "DELETE",
-            });
+            const response = await axios.delete(`/remove-order/${orderId}`);
 
             if (response.status === 200) {
                 const updatedOrders = orders.filter((order) => order._id !== orderId);
@@ -62,10 +58,7 @@ export default function Orders({ user }) {
 
     const handleSaveEdit = async (orderId) => {
         try {
-            const editedOrder = await axios.patch(`/update-order/${orderId}`, orders.find((order) => order._id === orderId));
-            setOrders((prevOrders) =>
-                prevOrders.map((order) => (order._id === orderId ? editedOrder.data : order))
-            );
+            const response = await axios.patch(`/update-order/${orderId}`, orders.find((order) => order._id === orderId));
             setEditingOrderId(null);
         } catch (error) {
             console.error("Error updating order:", error);
