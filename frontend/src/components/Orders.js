@@ -29,7 +29,7 @@ export default function Orders({ user }) {
             }
         };
         fetchData();
-    }, []);
+    }, [editingOrderId]);
 
     const handleDelete = async (orderId) => {
         try {

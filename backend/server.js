@@ -10,8 +10,8 @@ const app = express()
 const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryWrites=true&w=majority';
 
 const dbConfig = {
-    user: 'mkr',
-    password: '2404',
+    user: 'test',
+    password: '1',
     connectString: 'localhost:1521',
 };
 
