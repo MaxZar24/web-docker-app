@@ -1,153 +1,197 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 const mongoose = require('mongoose');
-const Order = require("./models");
+let Order = require("./models");
+const waitPort = require('wait-port');
 
 const app = express()
 
-const url = 'mongodb://172.17.0.5:27017/orders?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.1.1';
+const url = 'mongodb://adm:adm@mongo-db:27017/web-docker-app?authSource=admin';
 
 const mysqlConfig = {
-    host: 'localhost:3036',
+    host: 'mysql-db',
     user: 'test',
     password: '1234',
     database: 'usersdb',
-};
+    port: 3306,
+}
 
 mongoose
-    .connect(url)
-    .then(() => console.log('DB ok'))
-    .catch((err) => console.log('DB error', err));
+    .connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB connected'))
+    .catch((err) => console.log('MongoDB error', err));
+// mongoose.connect(url, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//     usePromises: true,
+// });
+// Order = mongoose.model('Order', {
+//     usePromises: true,
+// });
 
+
+
+const connection = mysql.createConnection(mysqlConfig);
+
+waitPort({host: 'mysql-db', port: 3306})
+    .then(() => {
+        connection.connect((err) => {
+            if (err) {
+                console.error('Error connecting to database:', err);
+                return;
+            }
+            console.log('Connected to the database');
+
+            connection.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    password VARCHAR(255) NOT NULL
+                );
+            `, (createTableErr) => {
+                if (createTableErr) {
+                    console.error('Error creating "users" table:', createTableErr);
+                } else {
+                    console.log('Table "users" created successfully');
+                }
+            });
+        });
+    })
+    .catch((err) => {
+        console.error('Error waiting for the database port:', err);
+    });
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 
-const pool = mysql.createPool(mysqlConfig);
+app.post('/signup', (req, res) => {
+    const {username, email, password} = req.body;
+    connection.query(
+        'SELECT * FROM users WHERE email = ?',
+        [email],
+        (selectError, selectResults) => {
+            if (selectError) {
+                console.error('Error selecting from database:', selectError);
+                res.status(500).json({error: 'Internal Server Error'});
+                return;
+            }
 
-app.post('/signup', async (req, res) => {
-    const { username, email, password } = req.body;
+            if (selectResults.length > 0) {
+                res.status(400).json({error: 'Cannot create a new user. Email already used.'});
+            } else {
+                connection.query(
+                    'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+                    [username, email, password],
+                    (insertError) => {
+                        if (insertError) {
+                            console.error('Error inserting into database:', insertError);
+                            res.status(500).json({error: 'Internal Server Error'});
+                            return;
+                        }
 
-    try {
-        const connection = await pool.getConnection();
-        const [rows] = await connection.execute(
-            'SELECT * FROM users WHERE email = ? AND password = ?',
-            [email, password]
-        );
-
-        if (rows.length > 0) {
-            res.status(400).json({ error: 'Can`t create new user! Email already used.' });
-        } else {
-            await connection.execute(
-                'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-                [username, email, password]
-            );
-            await connection.release();
-            res.status(200).json({ message: 'Data received and stored successfully!' });
+                        res.status(200).json({message: 'User created successfully!'});
+                    }
+                );
+            }
         }
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    );
 });
 
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+app.post('/login', (req, res) => {
+    const {email, password} = req.body;
 
-    try {
-        const connection = await pool.getConnection();
-        const [rows] = await connection.execute(
-            'SELECT * FROM users WHERE email = ? AND password = ?',
-            [email, password]
-        );
+    connection.query(
+        'SELECT * FROM users WHERE email = ? AND password = ?',
+        [email, password],
+        (err, rows) => {
+            if (err) {
+                console.error('Error selecting from database:', err);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
 
-        if (rows.length > 0) {
-            const userData = {
-                username: rows[0].username,
-                email: rows[0].email,
-                password: rows[0].password,
-            };
-            res.status(200).json({ message: 'Success logging', user: userData });
-        } else {
-            res.status(400).json({ error: 'Incorrect login or password' });
+            if (rows.length > 0) {
+                const userData = {
+                    username: rows[0].username,
+                    email: rows[0].email,
+                    password: rows[0].password,
+                };
+                res.status(200).json({message: 'Success logging', user: userData});
+            } else {
+                res.status(400).json({error: 'Incorrect login or password'});
+            }
         }
-
-        await connection.release();
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).send('Internal Server Error');
-    }
+    );
 });
 
+app.post('/change-username', (req, res) => {
+    const {email, username} = req.body;
 
-app.post('/change-username', async (req, res) => {
-    let { email, username } = req.body;
+    connection.query(
+        'UPDATE users SET username = ? WHERE email = ?',
+        [username, email],
+        (err, updateResult) => {
+            if (err) {
+                console.error('Error updating username:', err);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
 
-    try {
-        const connection = await pool.getConnection();
-        const [updateResult] = await connection.execute(
-            'UPDATE users SET username = ? WHERE email = ?',
-            [username, email]
-        );
-
-        if (updateResult.affectedRows > 0) {
-            res.status(200).json({ message: 'Username successfully updated' });
-        } else {
-            res.status(404).json({ error: 'User not found' });
+            if (updateResult.affectedRows > 0) {
+                res.status(200).json({message: 'Username successfully updated'});
+            } else {
+                res.status(404).json({error: 'User not found'});
+            }
         }
-
-        await connection.release();
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).send('Internal Server Error');
-    }
+    );
 });
 
-app.post('/change-password', async (req, res) => {
-    let { email, password } = req.body;
+app.post('/change-password', (req, res) => {
+    const {email, password} = req.body;
 
-    try {
-        const connection = await pool.getConnection();
-        const [updateResult] = await connection.execute(
-            'UPDATE users SET password = ? WHERE email = ?',
-            [password, email]
-        );
+    connection.query(
+        'UPDATE users SET password = ? WHERE email = ?',
+        [password, email],
+        (err, updateResult) => {
+            if (err) {
+                console.error('Error updating password:', err);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
 
-        if (updateResult.affectedRows > 0) {
-            res.status(200).json({ message: 'Password successfully updated' });
-        } else {
-            res.status(404).json({ error: 'User not found' });
+            if (updateResult.affectedRows > 0) {
+                res.status(200).json({message: 'Password successfully updated'});
+            } else {
+                res.status(404).json({error: 'User not found'});
+            }
         }
-
-        await connection.release();
-    } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).send('Internal Server Error');
-    }
+    );
 });
 
 
 app.get("/get-orders", async (req, res) => {
-    try {
-        const userEmail = req.query.user;
+    const userEmail = req.query.user;
 
-        if (!userEmail) {
-            return res.status(400).json({message: "Email is not specified"});
-        }
-
-        const orders = await Order.find({user: userEmail});
-        res.json({userEmail, orders});
-    } catch (error) {
-        res.status(500).json({message: error.message});
+    if (!userEmail) {
+        return res.status(400).json({ message: "Email is not specified" });
     }
-})
+
+    try {
+        const orders = await Order.find({ user: userEmail }).exec();
+        res.json({ userEmail, orders });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 app.post('/create-order', async (req, res) => {
-    try {
-        const {name, date, category, price, amount, user} = req.body;
+    const { name, date, category, price, amount, user } = req.body;
 
+    try {
         const newOrder = await Order.create({
             name,
             date,
@@ -156,7 +200,6 @@ app.post('/create-order', async (req, res) => {
             amount,
             user
         });
-
         res.status(201).json(newOrder);
     } catch (error) {
         console.error('Error:', error);
@@ -164,26 +207,26 @@ app.post('/create-order', async (req, res) => {
     }
 });
 
+
 app.patch('/update-order/:id', async (req, res) => {
     const orderId = req.params.id;
+    const { name, date, category, price, amount, user } = req.body;
 
     try {
-        const {name, date, category, price, amount, user} = req.body;
-
-        const newOrder = await Order.updateOne({
-            _id: orderId,
-        }, {
-            name,
-            date,
-            category,
-            price,
-            amount,
-            user
-        });
-
-        res.status(201).json(newOrder);
+        const updatedOrder = await Order.updateOne(
+            { _id: orderId },
+            {
+                name,
+                date,
+                category,
+                price,
+                amount,
+                user
+            }
+        );
+        res.status(201).json(updatedOrder);
     } catch (error) {
-        res.status(500).json({message: error.message});
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -192,16 +235,16 @@ app.delete("/remove-order/:id", async (req, res) => {
     const orderId = req.params.id;
 
     try {
-        const deletedOrder = await Order.findOneAndDelete({_id: orderId});
+        const deletedOrder = await Order.findOneAndDelete({ _id: orderId }).exec();
 
         if (!deletedOrder) {
-            return res.status(404).json({message: "Order not found"});
+            return res.status(404).json({ message: "Order not found" });
         }
 
-        res.json({message: "The order was successfully deleted", deletedOrder});
+        res.json({ message: "The order was successfully deleted", deletedOrder });
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: error.message});
+        res.status(500).json({ message: error.message });
     }
 });
 
