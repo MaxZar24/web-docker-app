@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    networks:
+      - network-backend
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: on-failure
+    depends_on:
+      - mongo
+      - mysql
+    ports:
+      - "3001:3001"
+    networks:
+      - network-backend
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    container_name: mongo-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: adm
+      MONGO_INITDB_ROOT_PASSWORD: adm
+      MONGO_INITDB_DATABASE: web-docker-app
+    command: ["mongod"]
+    networks:
+      - network-backend
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "5010:3306"
+    expose:
+      - 3306
+    restart: always
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: usersdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: 1234
+    networks:
+      - network-backend
+
+
+networks:
+  network-backend:
+    driver: bridge
