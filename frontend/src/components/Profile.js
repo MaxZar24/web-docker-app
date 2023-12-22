@@ -1,7 +1,11 @@
-export default function Profile({userData, usernameHandler, changeUsername, passwordHandler, changePassword}) {
+export default function Profile({userData, usernameHandler, changeUsername, passwordHandler, changePassword, photoHandler, changePhoto}) {
     return (
         <div className="bg-white p-3 rounded-bottom">
             <h1>Profile</h1>
+            <img className="mb-3" width='100' src='user.png' />
+            <div className="input-group mb-3">
+                <input type="file" className="form-control" id="inputGroupFile01" onChange={photoHandler} />
+            </div>
             <div><span className='fw-bold'>Email: </span>{userData.email}</div>
             <div>
                 <label className="fw-bold">Username: </label>

@@ -9,7 +9,8 @@ const Home = () => {
     const [userData, setUserData] = useState({
         username: '',
         email: '',
-        password: ''
+        password: '',
+        photo: ''
     });
     const navigate = useNavigate();
 
@@ -19,6 +20,7 @@ const Home = () => {
     useEffect(() => {
         if (storedUserData) {
             const parsedUserData = JSON.parse(storedUserData);
+            console.log(parsedUserData);
             setUserData(parsedUserData);
         } else {
             navigate('/login');
@@ -63,6 +65,8 @@ const Home = () => {
         }
     };
 
+
+
     const changePassword = async () => {
         try {
             const response = await axios.post('/change-password', {
@@ -76,6 +80,38 @@ const Home = () => {
             }
         } catch (error) {
             console.error('Error changing password:', error.message);
+        }
+    };
+
+    const photoHandler = (event) => {
+        setUserData((prevState) => {
+            return {
+                ...prevState,
+                photo: event.target.files
+            };
+        });
+        changePhoto();
+    };
+
+
+    const changePhoto = async () => {
+        try {
+            const formData = new FormData();
+            formData.append('email', userData.email);
+            formData.append('photo', userData.photo);
+
+            const response = await axios.post('/change-photo', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.status === 200) {
+                sessionStorage.setItem('user', JSON.stringify(userData));
+                alert('Photo has been changed');
+            }
+        } catch (error) {
+            console.error('Error changing username:', error.message);
         }
     };
 
@@ -101,7 +137,8 @@ const Home = () => {
 
                 {page === 'profile' ? (
                     <Profile userData={userData} usernameHandler={usernameHandler} changeUsername={changeUsername}
-                             passwordHandler={passwordHandler} changePassword={changePassword}
+                             passwordHandler={passwordHandler} changePassword={changePassword} photoHandler={photoHandler}
+                             changePhoto={changePhoto}
                     />
                 ) : (
                     <Orders userEmail={userData.email} />
