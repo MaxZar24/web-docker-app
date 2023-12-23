@@ -4,8 +4,6 @@ const mysql = require('mysql2');
 const mongoose = require('mongoose');
 let Order = require("./models");
 const waitPort = require('wait-port');
-const multer = require('multer');
-const upload = multer();
 
 const app = express()
 //
@@ -24,8 +22,8 @@ const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryW
 const mysqlConfig = {
     host: 'localhost',
     user: 'root',
-    password: '1234',
-    database: 'users',
+    password: '',
+    database: 'signup',
 };
 
 mongoose
@@ -45,7 +43,7 @@ mongoose
 
 const connection = mysql.createConnection(mysqlConfig);
 
-waitPort({host: 'localhost', port: 3306})
+waitPort({host: 'mysql-db', port: 3306})
     .then(() => {
         connection.connect((err) => {
             if (err) {
@@ -184,13 +182,12 @@ app.post('/change-password', (req, res) => {
     );
 });
 
-app.post('/change-photo', upload.single('photo'), (req, res) => {
-    const { email } = req.body;
-    const photoBuffer = req.file.buffer;
+app.post('/change-photo', (req, res) => {
+    const {email, photo} = req.body;
 
     connection.query(
         'UPDATE users SET photo = ? WHERE email = ?',
-        [photoBuffer, email],
+        [photo, email],
         (err, updateResult) => {
             if (err) {
                 console.error('Error updating photo:', err);
@@ -199,9 +196,9 @@ app.post('/change-photo', upload.single('photo'), (req, res) => {
             }
 
             if (updateResult.affectedRows > 0) {
-                res.status(200).json({ message: 'Photo successfully updated' });
+                res.status(200).json({message: 'Photo successfully updated'});
             } else {
-                res.status(404).json({ error: 'User not found' });
+                res.status(404).json({error: 'User not found'});
             }
         }
     );

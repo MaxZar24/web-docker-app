@@ -36,6 +36,7 @@ const Home = () => {
         });
     };
 
+
     const passwordHandler = (event) => {
         setUserData((prevState) => {
             return {
@@ -45,26 +46,6 @@ const Home = () => {
         });
     };
 
-    const photoHandler = (event) => {
-        const file = event.target.files[0];
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const photoBlob = new Blob([reader.result], {type: file.type});
-
-            setUserData((prevState) => {
-                return {
-                    ...prevState,
-                    photo: photoBlob,
-                };
-            });
-        };
-
-        if (file) {
-            reader.readAsArrayBuffer(file);
-        }
-    };
-
 
     const changeUsername = async () => {
         try {
@@ -72,6 +53,7 @@ const Home = () => {
                 email: userData.email,
                 username: userData.username,
             });
+
 
             if (response.status === 200) {
                 sessionStorage.setItem('user', JSON.stringify(userData));
@@ -84,10 +66,11 @@ const Home = () => {
     };
 
 
+
     const changePassword = async () => {
         try {
             const response = await axios.post('/change-password', {
-                email: userData.email,
+                email: userData.email, // Assuming you have a unique user ID
                 password: userData.password,
             });
 
@@ -99,16 +82,25 @@ const Home = () => {
             console.error('Error changing password:', error.message);
         }
     };
+
+    const photoHandler = (event) => {
+        setUserData((prevState) => {
+            return {
+                ...prevState,
+                photo: event.target.files
+            };
+        });
+        changePhoto();
+    };
+
+
     const changePhoto = async () => {
         try {
             const formData = new FormData();
             formData.append('email', userData.email);
             formData.append('photo', userData.photo);
 
-            const response = await axios.post('/change-photo', {
-                email: userData.email,
-                photo: userData.photo,
-            }, {
+            const response = await axios.post('/change-photo', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -119,7 +111,7 @@ const Home = () => {
                 alert('Photo has been changed');
             }
         } catch (error) {
-            console.error('Error changing photo:', error.message);
+            console.error('Error changing username:', error.message);
         }
     };
 
@@ -145,12 +137,11 @@ const Home = () => {
 
                 {page === 'profile' ? (
                     <Profile userData={userData} usernameHandler={usernameHandler} changeUsername={changeUsername}
-                             passwordHandler={passwordHandler} changePassword={changePassword}
-                             photoHandler={photoHandler}
+                             passwordHandler={passwordHandler} changePassword={changePassword} photoHandler={photoHandler}
                              changePhoto={changePhoto}
                     />
                 ) : (
-                    <Orders userEmail={userData.email}/>
+                    <Orders userEmail={userData.email} />
                 )}
             </div>
 
