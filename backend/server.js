@@ -4,18 +4,29 @@ const mysql = require('mysql2');
 const mongoose = require('mongoose');
 let Order = require("./models");
 const waitPort = require('wait-port');
+const multer = require('multer');
+const upload = multer();
 
 const app = express()
+//
+// const url = 'mongodb://adm:adm@mongo-db:27017/web-docker-app?authSource=admin';
+//
+// const mysqlConfig = {
+//     host: 'mysql-db',
+//     user: 'test',
+//     password: '1234',
+//     database: 'usersdb',
+//     port: 3306,
+// }
 
-const url = 'mongodb://adm:adm@mongo-db:27017/web-docker-app?authSource=admin';
+const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryWrites=true&w=majority';
 
 const mysqlConfig = {
-    host: 'mysql-db',
-    user: 'test',
+    host: 'localhost',
+    user: 'root',
     password: '1234',
-    database: 'usersdb',
-    port: 3306,
-}
+    database: 'users',
+};
 
 mongoose
     .connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -34,7 +45,7 @@ mongoose
 
 const connection = mysql.createConnection(mysqlConfig);
 
-waitPort({host: 'mysql-db', port: 3306})
+waitPort({host: 'localhost', port: 3306})
     .then(() => {
         connection.connect((err) => {
             if (err) {
@@ -48,7 +59,8 @@ waitPort({host: 'mysql-db', port: 3306})
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
-                    password VARCHAR(255) NOT NULL
+                    password VARCHAR(255) NOT NULL,
+                    photo LONGBLOB
                 );
             `, (createTableErr) => {
                 if (createTableErr) {
@@ -118,6 +130,7 @@ app.post('/login', (req, res) => {
                     username: rows[0].username,
                     email: rows[0].email,
                     password: rows[0].password,
+                    photo: rows[0].photo,
                 };
                 res.status(200).json({message: 'Success logging', user: userData});
             } else {
@@ -166,6 +179,29 @@ app.post('/change-password', (req, res) => {
                 res.status(200).json({message: 'Password successfully updated'});
             } else {
                 res.status(404).json({error: 'User not found'});
+            }
+        }
+    );
+});
+
+app.post('/change-photo', upload.single('photo'), (req, res) => {
+    const { email } = req.body;
+    const photoBuffer = req.file.buffer;
+
+    connection.query(
+        'UPDATE users SET photo = ? WHERE email = ?',
+        [photoBuffer, email],
+        (err, updateResult) => {
+            if (err) {
+                console.error('Error updating photo:', err);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
+
+            if (updateResult.affectedRows > 0) {
+                res.status(200).json({ message: 'Photo successfully updated' });
+            } else {
+                res.status(404).json({ error: 'User not found' });
             }
         }
     );
