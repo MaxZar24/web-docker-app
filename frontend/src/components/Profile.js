@@ -1,4 +1,6 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import axios from "axios";
+
 
 export default function Profile({
                                     userData,
@@ -10,16 +12,19 @@ export default function Profile({
                                     changePhoto
                                 }) {
 
-    console.log(userData.photo)
-    // const userPhotoUrl = userData.photo ? URL.createObjectURL(userData.photo) : null;
-
     return (
         <div className="bg-white p-3 rounded-bottom">
             <h1>Profile</h1>
-            <img className="mb-3" width='100' src='user.png' alt="user-avatar"/>
+            <img
+                className="mb-3"
+                width='100'
+                src={userData.photoUrl || 'user.png'}
+                alt="user-avatar"
+            />
             <div className="input-group mb-3">
                 <input type="file" className="form-control" id="inputGroupFile01" onChange={photoHandler}/>
             </div>
+
             <button className="btn btn-secondary mb-3" onClick={changePhoto}>
                 Change photo
             </button>

@@ -19,8 +19,8 @@ const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryW
 const mysqlConfig = {
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'signup',
+    password: '1234',
+    database: 'users',
 };
 
 mongoose
@@ -55,6 +55,7 @@ waitPort({host: 'localhost', port: 3306})
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
                     password VARCHAR(255) NOT NULL,
+                    mimetype VARCHAR(255),
                     photo LONGBLOB
                 );
             `, (createTableErr) => {

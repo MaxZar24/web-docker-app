@@ -17,26 +17,16 @@ const Login = () => {
 
         try {
             const response = await axios.post('/login', formData);
-            console.log((response.data.user));
 
             if (response.status === 200) {
                 console.log(response.data.message);
-                const userData = response.data.user;
-                sessionStorage.setItem('user', JSON.stringify(userData));
+                const userData = {...response.data.user};
+                sessionStorage.setItem('user', JSON.stringify({email: response.data.user.email}));
                 navigate('/');
             }
 
         } catch (error) {
-            if (error.response && error.response.status === 400) {
-                // const falseEmail = document.getElementById("email-input")
-                // const falsePassword = document.getElementById("password-input")
-                // falseEmail.style.border = "2px solid red"
-                // falsePassword.style.border = "2px solid red"
-                // falseEmail.value = ""
-                // falsePassword.value = ""
-                // falseEmail.placeholder = `Incorrect login or password.`
-                // falsePassword.placeholder = `Incorrect login or password.`
-            }
+            console.log(error);
         }
     };
 
