@@ -8,10 +8,12 @@ const {
     changeUsername,
     changePassword,
     changePhoto,
+    deletePhoto,
     getOrders,
     createOrder,
     updateOrder,
-    removeOrder, getUserData
+    removeOrder,
+    getUserData,
 } = require('../controllers/controller');
 
 const storage = multer.memoryStorage();
@@ -23,6 +25,7 @@ router.get('/get-user-data', getUserData);
 router.post('/change-username', changeUsername);
 router.post('/change-password', changePassword);
 router.post('/change-photo', upload.single('file'), changePhoto);
+router.post('/delete-photo', deletePhoto);
 
 router.get('/get-orders', getOrders);
 router.post('/create-order', createOrder);

@@ -9,7 +9,8 @@ export default function Profile({
                                     passwordHandler,
                                     changePassword,
                                     photoHandler,
-                                    changePhoto
+                                    changePhoto,
+    deletePhoto
                                 }) {
 
     return (
@@ -28,6 +29,11 @@ export default function Profile({
             <button className="btn btn-secondary mb-3" onClick={changePhoto}>
                 Change photo
             </button>
+
+            <button className="btn btn-danger mb-3 mx-3" onClick={deletePhoto}>
+                Delete photo
+            </button>
+
             <div><span className='fw-bold'>Email: </span>{userData.email}</div>
             <div>
                 <label className="fw-bold">Username: </label>

@@ -7,11 +7,7 @@ import Orders from "../components/Orders";
 const Home = () => {
     const [page, setPage] = useState('profile');
     const [userData, setUserData] = useState({
-        username: '',
-        email: '',
-        password: '',
-        photo: '',
-        mimetype: ''
+        username: '', email: '', password: '', photo: '', mimetype: ''
     });
     const navigate = useNavigate();
     const [selectedFile, setSelectedFile] = useState(null);
@@ -34,12 +30,12 @@ const Home = () => {
 
                     if (response.data.user.photo) {
                         const arrayBuffer = Uint8Array.from(atob(response.data.user.photo), char => char.charCodeAt(0));
-                        const blob = new Blob([arrayBuffer], { type: response.data.user.mimetype });
+                        const blob = new Blob([arrayBuffer], {type: response.data.user.mimetype});
 
                         const url = URL.createObjectURL(blob);
-                        setUserData({ ...response.data.user, photoUrl: url });
+                        setUserData({...response.data.user, photoUrl: url});
                     } else {
-                        setUserData({ ...response.data.user, photoUrl: null });
+                        setUserData({...response.data.user, photoUrl: null});
                     }
                 } catch (error) {
                     console.error("Error fetching data:", error);
@@ -56,8 +52,7 @@ const Home = () => {
     const usernameHandler = (event) => {
         setUserData((prevState) => {
             return {
-                ...prevState,
-                username: event.target.value
+                ...prevState, username: event.target.value
             };
         });
     };
@@ -65,8 +60,7 @@ const Home = () => {
     const passwordHandler = (event) => {
         setUserData((prevState) => {
             return {
-                ...prevState,
-                password: event.target.value
+                ...prevState, password: event.target.value
             };
         });
     };
@@ -79,8 +73,7 @@ const Home = () => {
     const changeUsername = async () => {
         try {
             const response = await axios.post('/change-username', {
-                email: userData.email,
-                username: userData.username,
+                email: userData.email, username: userData.username,
             });
 
             if (response.status === 200) {
@@ -96,8 +89,7 @@ const Home = () => {
     const changePassword = async () => {
         try {
             const response = await axios.post('/change-password', {
-                email: userData.email,
-                password: userData.password,
+                email: userData.email, password: userData.password,
             });
 
             if (response.status === 200) {
@@ -123,12 +115,11 @@ const Home = () => {
 
             if (response.status === 200) {
                 const arrayBuffer = Uint8Array.from(atob(response.data.data.photo), char => char.charCodeAt(0));
-                const blob = new Blob([arrayBuffer], { type: response.data.data.mimetype });
+                const blob = new Blob([arrayBuffer], {type: response.data.data.mimetype});
                 const url = URL.createObjectURL(blob);
 
                 setUserData(prevState => ({
-                    ...prevState,
-                    photoUrl: url,
+                    ...prevState, photoUrl: url,
                 }));
 
                 alert('Photo has been changed');
@@ -140,8 +131,24 @@ const Home = () => {
         }
     };
 
-    return (
-        <div className="d-flex flex-column vh-100 justify-content-center align-items-center bg-secondary">
+    const deletePhoto = async () => {
+        try {
+            const response = await axios.post('/delete-photo', {photo: null, mimetype: null, email: userData.email});
+
+            if (response.status === 200) {
+                setUserData(prevState => ({
+                    ...prevState, photoUrl: null,
+                }));
+                alert('Photo has been deleted');
+            } else {
+                console.error('Error deleting photo:', response.data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting photo:', error.message);
+        }
+    };
+
+    return (<div className="d-flex flex-column vh-100 justify-content-center align-items-center bg-secondary">
             <div className="m-3">
                 <div className="btn-group w-100 mt-3">
                     <button
@@ -163,15 +170,11 @@ const Home = () => {
                     <Profile userData={userData} usernameHandler={usernameHandler} changeUsername={changeUsername}
                              passwordHandler={passwordHandler} changePassword={changePassword}
                              photoHandler={photoHandler}
-                             changePhoto={changePhoto}
-                    />
-                ) : (
-                    <Orders userEmail={userData.email}/>
-                )}
+                             changePhoto={changePhoto} deletePhoto={deletePhoto}
+                    />) : (<Orders userEmail={userData.email}/>)}
             </div>
 
-        </div>
-    );
+        </div>);
 };
 
 export default Home;

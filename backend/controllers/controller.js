@@ -134,6 +134,8 @@ exports.changePassword = (req, res) => {
 };
 
 exports.changePhoto = (req, res) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/png'];
+
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
@@ -142,6 +144,10 @@ exports.changePhoto = (req, res) => {
 
     const photoBuffer = req.file.buffer;
     const mimetype = req.file.mimetype;
+
+    if (!allowedMimeTypes.includes(mimetype)) {
+        return res.status(400).json({ message: 'Invalid file type. Allowed types: jpeg, png' });
+    }
 
     connection.query(
         'UPDATE users SET photo = ?, mimetype = ? WHERE email = ?',
@@ -156,6 +162,28 @@ exports.changePhoto = (req, res) => {
                 res.status(200).json({message: 'Photo successfully updated', data: {
                         photo: photoBuffer.toString('base64'), mimetype: mimetype
                     }});
+            } else {
+                res.status(404).json({error: 'User not found'});
+            }
+        }
+    );
+};
+
+exports.deletePhoto = (req, res) => {
+
+    const {photo, mimetype, email} = req.body;
+
+    connection.query(
+        'UPDATE users SET photo = ?, mimetype = ? WHERE email = ?',
+        [photo, mimetype, email],
+        (err, updateResult) => {
+            if (err) {
+                console.error('Error deleting photo:', err);
+                return res.status(500).send('Internal Server Error');
+            }
+
+            if (updateResult.affectedRows > 0) {
+                res.status(200).json({message: 'Photo successfully deleted'});
             } else {
                 res.status(404).json({error: 'User not found'});
             }
