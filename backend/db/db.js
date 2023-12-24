@@ -19,8 +19,8 @@ const url = 'mongodb+srv://admin:1234@cluster0.smqleka.mongodb.net/orders?retryW
 const mysqlConfig = {
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'signup',
+    password: '1234',
+    database: 'users',
 };
 
 mongoose

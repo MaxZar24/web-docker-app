@@ -15,8 +15,6 @@ const Home = () => {
     });
     const navigate = useNavigate();
     const [selectedFile, setSelectedFile] = useState(null);
-
-
     const storedUserData = sessionStorage.getItem('user');
 
     useEffect(() => {
@@ -31,22 +29,29 @@ const Home = () => {
                             user: parsedUserData.email,
                         },
                     });
-                    console.log(response.data);
-                    const arrayBuffer = Uint8Array.from(atob(response.data.user.photo), char => char.charCodeAt(0));
-                    const blob = new Blob([arrayBuffer], { type: response.data.user.mimetype });
 
-                    const url = URL.createObjectURL(blob);
-                    setUserData({...response.data.user, photoUrl: url});
+                    console.log(response.data);
+
+                    if (response.data.user.photo) {
+                        const arrayBuffer = Uint8Array.from(atob(response.data.user.photo), char => char.charCodeAt(0));
+                        const blob = new Blob([arrayBuffer], { type: response.data.user.mimetype });
+
+                        const url = URL.createObjectURL(blob);
+                        setUserData({ ...response.data.user, photoUrl: url });
+                    } else {
+                        setUserData({ ...response.data.user, photoUrl: null });
+                    }
                 } catch (error) {
                     console.error("Error fetching data:", error);
                 }
             };
             fetchData();
-            console.log(userData)
+            console.log(userData);
         } else {
             navigate('/login');
         }
     }, [storedUserData]);
+
 
     const usernameHandler = (event) => {
         setUserData((prevState) => {
@@ -88,7 +93,6 @@ const Home = () => {
         }
     };
 
-
     const changePassword = async () => {
         try {
             const response = await axios.post('/change-password', {
@@ -115,21 +119,29 @@ const Home = () => {
             formData.append('email', userData.email);
             formData.append('file', selectedFile);
 
-            const response = await axios.post('/change-photo', formData,);
+            const response = await axios.post('/change-photo', formData);
 
             if (response.status === 200) {
+                const arrayBuffer = Uint8Array.from(atob(response.data.data.photo), char => char.charCodeAt(0));
+                const blob = new Blob([arrayBuffer], { type: response.data.data.mimetype });
+                const url = URL.createObjectURL(blob);
+
+                setUserData(prevState => ({
+                    ...prevState,
+                    photoUrl: url,
+                }));
+
                 alert('Photo has been changed');
+            } else {
+                console.error('Error changing photo:', response.data.message);
             }
-
-
         } catch (error) {
             console.error('Error changing photo:', error.message);
         }
     };
 
-
     return (
-        <div className="d-flex flex-column justify-content-center align-items-center bg-secondary">
+        <div className="d-flex flex-column vh-100 justify-content-center align-items-center bg-secondary">
             <div className="m-3">
                 <div className="btn-group w-100 mt-3">
                     <button

@@ -153,7 +153,9 @@ exports.changePhoto = (req, res) => {
             }
 
             if (updateResult.affectedRows > 0) {
-                res.status(200).json({message: 'Photo successfully updated'});
+                res.status(200).json({message: 'Photo successfully updated', data: {
+                        photo: photoBuffer.toString('base64'), mimetype: mimetype
+                    }});
             } else {
                 res.status(404).json({error: 'User not found'});
             }
@@ -235,28 +237,4 @@ exports.removeOrder = async (req, res) => {
         console.error(error);
         res.status(500).json({message: error.message});
     }
-};
-
-
-
-exports.getFile = (req, res) => {
-    // SELECT-запит для вибору інформації з бази даних
-    const query = 'SELECT photo, mimetype FROM users WHERE email = "kit@gmail.com" ';
-    console.log()
-
-    connection.query(query, (err, result) => {
-        if (err) {
-            console.error('Error retrieving file from database: ', err);
-            return res.status(500).json({ message: 'Internal Server Error' });
-        }
-
-        if (result.length === 0) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        const { mimetype, photo } = result[0];
-
-        // Відправлення файлу на фронтенд як відповідь на запит
-        res.status(200).json({ mimetype, photo: result[0].photo.toString('base64') });
-    });
 };
