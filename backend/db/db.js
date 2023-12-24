@@ -55,6 +55,7 @@ waitPort({host: 'localhost', port: 3306})
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
                     password VARCHAR(255) NOT NULL,
+                    mimetype VARCHAR(255),
                     photo LONGBLOB
                 );
             `, (createTableErr) => {

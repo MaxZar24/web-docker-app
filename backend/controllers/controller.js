@@ -49,10 +49,7 @@ exports.logIn = (req, res) => {
 
             if (rows.length > 0) {
                 const userData = {
-                    username: rows[0].username,
                     email: rows[0].email,
-                    password: rows[0].password,
-                    photo: rows[0].photo,
                 };
                 res.status(200).json({message: 'Success logging', user: userData});
             } else {
@@ -61,6 +58,36 @@ exports.logIn = (req, res) => {
         }
     );
 };
+
+exports.getUserData = (req, res) => {
+    const email = req.query.user;
+
+    connection.query(
+        'SELECT * FROM users WHERE email = ?',
+        [email],
+        (err, rows) => {
+            if (err) {
+                console.error('Error selecting from database:', err);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
+
+            if (rows.length > 0) {
+                const userData = {
+                    username: rows[0].username,
+                    email: rows[0].email,
+                    password: rows[0].password,
+                    photo: rows[0].photo ? rows[0].photo.toString('base64') : null,
+                    mimetype: rows[0].mimetype,
+                };
+                res.status(200).json({message: 'Success', user: userData});
+            } else {
+                res.status(400).json({error: 'Data not found'});
+            }
+        }
+    );
+};
+
 
 exports.changeUsername = (req, res) => {
     const {email, username} = req.body;
@@ -107,17 +134,22 @@ exports.changePassword = (req, res) => {
 };
 
 exports.changePhoto = (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+
     const {email} = req.body;
+
     const photoBuffer = req.file.buffer;
+    const mimetype = req.file.mimetype;
 
     connection.query(
-        'UPDATE users SET photo = ? WHERE email = ?',
-        [photoBuffer, email],
+        'UPDATE users SET photo = ?, mimetype = ? WHERE email = ?',
+        [photoBuffer, mimetype, email],
         (err, updateResult) => {
             if (err) {
                 console.error('Error updating photo:', err);
-                res.status(500).send('Internal Server Error');
-                return;
+                return res.status(500).send('Internal Server Error');
             }
 
             if (updateResult.affectedRows > 0) {
@@ -128,7 +160,6 @@ exports.changePhoto = (req, res) => {
         }
     );
 };
-
 
 exports.getOrders = async (req, res) => {
     const userEmail = req.query.user;
@@ -204,4 +235,28 @@ exports.removeOrder = async (req, res) => {
         console.error(error);
         res.status(500).json({message: error.message});
     }
+};
+
+
+
+exports.getFile = (req, res) => {
+    // SELECT-запит для вибору інформації з бази даних
+    const query = 'SELECT photo, mimetype FROM users WHERE email = "kit@gmail.com" ';
+    console.log()
+
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.error('Error retrieving file from database: ', err);
+            return res.status(500).json({ message: 'Internal Server Error' });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        const { mimetype, photo } = result[0];
+
+        // Відправлення файлу на фронтенд як відповідь на запит
+        res.status(200).json({ mimetype, photo: result[0].photo.toString('base64') });
+    });
 };

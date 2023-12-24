@@ -11,7 +11,7 @@ const {
     getOrders,
     createOrder,
     updateOrder,
-    removeOrder
+    removeOrder, getFile, getUserData
 } = require('../controllers/controller');
 
 const storage = multer.memoryStorage();
@@ -19,9 +19,11 @@ const upload = multer({storage: storage});
 
 router.post('/signup', signUp);
 router.post('/login', logIn);
+router.get('/get-user-data', getUserData);
 router.post('/change-username', changeUsername);
 router.post('/change-password', changePassword);
 router.post('/change-photo', upload.single('file'), changePhoto);
+router.get('/get-photo', getFile);
 
 router.get('/get-orders', getOrders);
 router.post('/create-order', createOrder);
