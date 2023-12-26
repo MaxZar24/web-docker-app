@@ -1,20 +1,41 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import axios from "axios";
 import "../styles/Orders.css";
 
 export default function Orders({userEmail}) {
     const [orders, setOrders] = useState([]);
+    const [editingOrderId, setEditingOrderId] = useState(null);
     const [newOrder, setNewOrder] = useState({
-        photo: "",
-        filename: "",
-        mimetype: "",
+        photoUrl: "",
         name: "",
         date: "",
         category: "",
         price: "",
         amount: "",
     });
-    const [editingOrderId, setEditingOrderId] = useState(null);
+
+    const inputFileRef = React.useRef(null);
+
+    const handleChangeFile = async (event) => {
+        try {
+            const allowedFileTypes = ['image/png', 'image/jpeg'];
+
+            const formData = new FormData();
+            const file = event.target.files[0];
+
+            if (file && allowedFileTypes.includes(file.type)) {
+                formData.append('image', file);
+                const { data } = await axios.post('/upload', formData);
+                return data.url;
+            } else {
+                alert('Дозволені тільки файли з розширенням PNG або JPEG.');
+            }
+        } catch (err) {
+            console.warn(err);
+            alert('Помилка при завантажені файлу');
+        }
+    };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,12 +83,7 @@ export default function Orders({userEmail}) {
     const handleSaveEdit = async (orderId) => {
         try {
             const response = await axios.patch(`/update-order/${orderId}`,
-                orders.find((order) => order._id === orderId),
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                });
+                orders.find((order) => order._id === orderId));
             setEditingOrderId(null);
         } catch (error) {
             console.error("Error updating order:", error);
@@ -79,17 +95,13 @@ export default function Orders({userEmail}) {
             const response = await axios.post("/create-order", {
                 ...newOrder,
                 user: userEmail,
-            }, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
             });
 
             if (response.status === 201) {
                 const createdOrder = response.data;
                 setOrders([...orders, createdOrder]);
                 setNewOrder({
-                    photo: "",
+                    photoUrl: "",
                     filename: "",
                     mimetype: "",
                     name: "",
@@ -128,20 +140,41 @@ export default function Orders({userEmail}) {
                         <th scope="row">{index + 1}</th>
                         <td>
                             {editingOrderId === item._id ? (
-                                <input
-                                    type="file"
-                                    onChange={(e) => handleEditChange("photo", e.target.files[0])}
-                                    className="form-control"
-                                />
+                                <>
+                                    {item.photoUrl && (
+                                        <>
+                                            <img
+                                                className="mb-3"
+                                                width="100"
+                                                src={`http://localhost:3001${item.photoUrl}`}
+                                                alt="order-photo"
+                                            />
+                                            {/*<button className="btn btn-danger mb-3 mx-3" onClick={handleEditChange("photoUrl", "")}>*/}
+                                            {/*    Delete photo*/}
+                                            {/*</button>*/}
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        onChange={(event) => {
+                                            handleChangeFile(event)
+                                                .then((url) => handleEditChange("photoUrl", url))
+                                        }}
+                                        className="form-control"
+                                    />
+                                </>
                             ) : (
-                                <img
-                                    className="mb-3"
-                                    width="100"
-                                    src={item.filename || 'user.png'}
-                                    alt="order-photo"
-                                />
+                                item.photoUrl && (
+                                    <img
+                                        className="mb-3"
+                                        width="100"
+                                        src={`http://localhost:3001${item.photoUrl}`}
+                                        alt="order-photo"
+                                    />
+                                )
                             )}
                         </td>
+
 
                         <td>
                             {editingOrderId === item._id ? (
@@ -238,12 +271,29 @@ export default function Orders({userEmail}) {
                 <tr>
                     <th scope="row">{orders.length + 1}</th>
                     <td>
-                        <input
-                            type="file"
-                            // value={newOrder.photo}
-                            onChange={(e) => setNewOrder({...newOrder, photo: e.target.files[0]})}
-                            className="form-control mb-3"
-                        />
+                        <>
+                            {newOrder.photoUrl && (
+                                <>
+                                    <img
+                                        className="mb-3"
+                                        width="100"
+                                        src={`http://localhost:3001${newOrder.photoUrl}`}
+                                        alt="order-photo"
+                                    />
+                                    {/*<button className="btn btn-danger mb-3 mx-3" onClick={setNewOrder({...newOrder, photoUrl: ''})}>*/}
+                                    {/*    Delete photo*/}
+                                    {/*</button>*/}
+                                </>
+                            )}
+                            <input
+                                type="file"
+                                onChange={(event) => {
+                                    handleChangeFile(event)
+                                        .then((url) => setNewOrder({...newOrder, photoUrl: url}))
+                                }}
+                                className="form-control"
+                            />
+                        </>
                     </td>
                     <td>
                         <input

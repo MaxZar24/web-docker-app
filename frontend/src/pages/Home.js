@@ -148,7 +148,7 @@ const Home = () => {
         }
     };
 
-    return (<div className="d-flex flex-column vh-100 justify-content-center align-items-center bg-secondary">
+    return (<div className="d-flex flex-column min-vh-100 justify-content-center align-items-center bg-secondary">
             <div className="m-3">
                 <div className="btn-group w-100 mt-3">
                     <button

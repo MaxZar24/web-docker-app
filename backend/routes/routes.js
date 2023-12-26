@@ -19,6 +19,17 @@ const {
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
 
+const storageForOrders = multer.diskStorage({
+    destination: (_, __, cb) => {
+        cb(null, 'uploads');
+    },
+    filename: (_, file, cb) => {
+        cb(null, file.originalname);
+    },
+})
+
+const uploadForOrders = multer({ storage: storageForOrders });
+
 router.post('/signup', signUp);
 router.post('/login', logIn);
 router.get('/get-user-data', getUserData);
@@ -28,8 +39,13 @@ router.post('/change-photo', upload.single('file'), changePhoto);
 router.post('/delete-photo', deletePhoto);
 
 router.get('/get-orders', getOrders);
-router.post('/create-order', upload.single('photo'), createOrder);
-router.patch('/update-order/:id', upload.single('photo'), updateOrder);
+router.post('/create-order', createOrder);
+router.patch('/update-order/:id', updateOrder);
+router.post('/upload',  uploadForOrders.single('image'), (req, res) => {
+    res.json({
+        url: `/uploads/${req.file.originalname}`
+    });
+});
 router.delete('/remove-order/:id', removeOrder);
 
 module.exports = router;

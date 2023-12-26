@@ -1,17 +1,9 @@
 const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
-    photo: {
-        type: Buffer,
+    photoUrl: {
+        type: String,
         required: false,
-    },
-    filename: {
-        type: String,
-        required: false
-    },
-    mimetype: {
-        type: String,
-        required: false
     },
     name: {
         type: String,

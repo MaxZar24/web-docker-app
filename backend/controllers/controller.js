@@ -1,11 +1,6 @@
 const connection = require('../db/db');
 const Order = require("../models/order");
-const {join} = require("path");
-const path = require("path");
-const {mkdirSync, existsSync, writeFileSync} = require("fs");
-// const express = require('express');
-// const app = express();
-// app.use('/uploads', express.static(join(__dirname, 'uploads')));
+
 
 exports.signUp = (req, res) => {
     const {username, email, password} = req.body;
@@ -214,12 +209,11 @@ exports.getOrders = async (req, res) => {
 
 
 exports.createOrder = async (req, res) => {
-    const allowedMimeTypes = ["image/png", "image/jpeg"];
-    const {name, date, category, price, amount, user} = req.body;
-    console.log("Received File:", req.file);
+    const {photoUrl, name, date, category, price, amount, user} = req.body;
 
     try {
         let createFields = {
+            photoUrl,
             name,
             date,
             category,
@@ -227,16 +221,6 @@ exports.createOrder = async (req, res) => {
             amount,
             user
         };
-
-        if (req.file) {
-            createFields.photo = req.file.buffer;
-            createFields.filename = req.file.originalname;
-            createFields.mimetype = req.file.mimetype;
-        }
-
-        // if (!allowedMimeTypes.includes(createFields.mimetype)) {
-        //     return res.status(400).json({message: 'Invalid file type. Allowed types: jpeg, png'});
-        // }
 
         const newOrder = await Order.create(
             createFields
@@ -251,13 +235,13 @@ exports.createOrder = async (req, res) => {
 
 
 exports.updateOrder = async (req, res) => {
-    const allowedMimeTypes = ["image/png", "image/jpeg"];
     const orderId = req.params.id;
-    const {name, date, category, price, amount, user} = req.body;
+    const {photoUrl, name, date, category, price, amount, user} = req.body;
     console.log("Received File:", req.file)
 
     try {
         let updateFields = {
+            photoUrl,
             name,
             date,
             category,
@@ -265,34 +249,6 @@ exports.updateOrder = async (req, res) => {
             amount,
             user
         };
-
-        const uploadFolder = join(__dirname, '../uploads'); // Adjust the path accordingly
-        console.log('Upload Folder:', uploadFolder);
-
-        // Ensure the 'uploads' folder exists
-        if (!existsSync(uploadFolder)) {
-            mkdirSync(uploadFolder);
-        }
-
-        // Generate a unique filename for the uploaded image
-        const fileName = `${Date.now()}_${req.file.originalname}`;
-        const filePath = path.join(uploadFolder, fileName);
-        console.log('File Path:', filePath);
-
-        // Write the buffer to the file
-        writeFileSync(filePath, req.file.buffer);
-        res.sendFile(filePath);
-
-        if (req.file) {
-            updateFields.photo = req.file.buffer;
-            // updateFields.filename = path.join('uploads/', fileName);
-            updateFields.filename = req.file.originalname;
-            updateFields.mimetype = req.file.mimetype;
-        }
-
-        // if (!allowedMimeTypes.includes(updateFields.mimetype)) {
-        //     return res.status(400).json({message: 'Invalid file type. Allowed types: jpeg, png'});
-        // }
 
         const updatedOrder = await Order.updateOne(
             {_id: orderId},
