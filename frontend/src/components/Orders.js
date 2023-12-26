@@ -118,6 +118,17 @@ export default function Orders({userEmail}) {
         }
     };
 
+    const handleDeletePhoto = (action) => {
+        switch (action) {
+            case 'editing':
+                handleEditChange("photoUrl", "");
+                break;
+            case 'creating':
+                setNewOrder({...newOrder, photoUrl: ''});
+                break;
+        }
+    }
+
     return (
         <div className="bg-white p-3 rounded-bottom">
             <h1>Orders</h1>
@@ -149,9 +160,9 @@ export default function Orders({userEmail}) {
                                                 src={`http://localhost:3001${item.photoUrl}`}
                                                 alt="order-photo"
                                             />
-                                            {/*<button className="btn btn-danger mb-3 mx-3" onClick={handleEditChange("photoUrl", "")}>*/}
-                                            {/*    Delete photo*/}
-                                            {/*</button>*/}
+                                            <button className="btn btn-danger mb-3 mx-3" onClick={()=> handleDeletePhoto("editing")}>
+                                                Delete photo
+                                            </button>
                                         </>
                                     )}
                                     <input
@@ -280,9 +291,9 @@ export default function Orders({userEmail}) {
                                         src={`http://localhost:3001${newOrder.photoUrl}`}
                                         alt="order-photo"
                                     />
-                                    {/*<button className="btn btn-danger mb-3 mx-3" onClick={setNewOrder({...newOrder, photoUrl: ''})}>*/}
-                                    {/*    Delete photo*/}
-                                    {/*</button>*/}
+                                    <button className="btn btn-danger mb-3 mx-3" onClick={() => handleDeletePhoto('creating')}>
+                                        Delete photo
+                                    </button>
                                 </>
                             )}
                             <input
