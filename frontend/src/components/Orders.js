@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import axios from "axios";
 import "../styles/Orders.css";
 
-export default function Orders({ userEmail }) {
+export default function Orders({userEmail}) {
     const [orders, setOrders] = useState([]);
     const [newOrder, setNewOrder] = useState({
+        photo: "",
+        filename: "",
+        mimetype: "",
         name: "",
         date: "",
         category: "",
@@ -58,7 +61,13 @@ export default function Orders({ userEmail }) {
 
     const handleSaveEdit = async (orderId) => {
         try {
-            const response = await axios.patch(`/update-order/${orderId}`, orders.find((order) => order._id === orderId));
+            const response = await axios.patch(`/update-order/${orderId}`,
+                orders.find((order) => order._id === orderId),
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
             setEditingOrderId(null);
         } catch (error) {
             console.error("Error updating order:", error);
@@ -70,12 +79,19 @@ export default function Orders({ userEmail }) {
             const response = await axios.post("/create-order", {
                 ...newOrder,
                 user: userEmail,
+            }, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
             });
 
             if (response.status === 201) {
                 const createdOrder = response.data;
                 setOrders([...orders, createdOrder]);
                 setNewOrder({
+                    photo: "",
+                    filename: "",
+                    mimetype: "",
                     name: "",
                     date: "",
                     category: "",
@@ -97,6 +113,7 @@ export default function Orders({ userEmail }) {
                 <thead>
                 <tr>
                     <th scope="col">ID</th>
+                    <th scope="col">Photo</th>
                     <th scope="col">Name</th>
                     <th scope="col">Date</th>
                     <th scope="col">Category</th>
@@ -109,6 +126,23 @@ export default function Orders({ userEmail }) {
                 {orders.map((item, index) => (
                     <tr key={item._id}>
                         <th scope="row">{index + 1}</th>
+                        <td>
+                            {editingOrderId === item._id ? (
+                                <input
+                                    type="file"
+                                    onChange={(e) => handleEditChange("photo", e.target.files[0])}
+                                    className="form-control"
+                                />
+                            ) : (
+                                <img
+                                    className="mb-3"
+                                    width="100"
+                                    src={item.filename || 'user.png'}
+                                    alt="order-photo"
+                                />
+                            )}
+                        </td>
+
                         <td>
                             {editingOrderId === item._id ? (
                                 <input
@@ -179,7 +213,8 @@ export default function Orders({ userEmail }) {
                                     </svg>
                                 </button>
                             ) : (
-                                <button key={`edit-${item._id}`} className="edit-but" onClick={() => handleEdit(item._id)}>
+                                <button key={`edit-${item._id}`} className="edit-but"
+                                        onClick={() => handleEdit(item._id)}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                          className="bi bi-pen" viewBox="0 0 16 16">
                                         <path
@@ -187,7 +222,8 @@ export default function Orders({ userEmail }) {
                                     </svg>
                                 </button>
                             )}
-                            <button key={`delete-${item._id}`} className="del-but" onClick={() => handleDelete(item._id)}>
+                            <button key={`delete-${item._id}`} className="del-but"
+                                    onClick={() => handleDelete(item._id)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                      className="bi bi-trash" viewBox="0 0 16 16">
                                     <path
@@ -203,9 +239,17 @@ export default function Orders({ userEmail }) {
                     <th scope="row">{orders.length + 1}</th>
                     <td>
                         <input
+                            type="file"
+                            // value={newOrder.photo}
+                            onChange={(e) => setNewOrder({...newOrder, photo: e.target.files[0]})}
+                            className="form-control mb-3"
+                        />
+                    </td>
+                    <td>
+                        <input
                             type="text"
                             value={newOrder.name}
-                            onChange={(e) => setNewOrder({ ...newOrder, name: e.target.value })}
+                            onChange={(e) => setNewOrder({...newOrder, name: e.target.value})}
                             className="form-control mb-3"
                         />
                     </td>
@@ -213,7 +257,7 @@ export default function Orders({ userEmail }) {
                         <input
                             type="text"
                             value={newOrder.date}
-                            onChange={(e) => setNewOrder({ ...newOrder, date: e.target.value })}
+                            onChange={(e) => setNewOrder({...newOrder, date: e.target.value})}
                             className="form-control mb-3"
                         />
                     </td>
@@ -221,7 +265,7 @@ export default function Orders({ userEmail }) {
                         <input
                             type="text"
                             value={newOrder.category}
-                            onChange={(e) => setNewOrder({ ...newOrder, category: e.target.value })}
+                            onChange={(e) => setNewOrder({...newOrder, category: e.target.value})}
                             className="form-control mb-3"
                         />
                     </td>
@@ -229,7 +273,7 @@ export default function Orders({ userEmail }) {
                         <input
                             type="text"
                             value={newOrder.price}
-                            onChange={(e) => setNewOrder({ ...newOrder, price: e.target.value })}
+                            onChange={(e) => setNewOrder({...newOrder, price: e.target.value})}
                             className="form-control mb-3"
                         />
                     </td>
@@ -237,7 +281,7 @@ export default function Orders({ userEmail }) {
                         <input
                             type="text"
                             value={newOrder.amount}
-                            onChange={(e) => setNewOrder({ ...newOrder, amount: e.target.value })}
+                            onChange={(e) => setNewOrder({...newOrder, amount: e.target.value})}
                             className="form-control mb-3"
                         />
                     </td>

@@ -28,8 +28,8 @@ router.post('/change-photo', upload.single('file'), changePhoto);
 router.post('/delete-photo', deletePhoto);
 
 router.get('/get-orders', getOrders);
-router.post('/create-order', createOrder);
-router.patch('/update-order/:id', updateOrder);
+router.post('/create-order', upload.single('photo'), createOrder);
+router.patch('/update-order/:id', upload.single('photo'), updateOrder);
 router.delete('/remove-order/:id', removeOrder);
 
 module.exports = router;

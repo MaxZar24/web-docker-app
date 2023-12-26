@@ -1,6 +1,18 @@
 const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
+    photo: {
+        type: Buffer,
+        required: false,
+    },
+    filename: {
+        type: String,
+        required: false
+    },
+    mimetype: {
+        type: String,
+        required: false
+    },
     name: {
         type: String,
         required: true,
@@ -26,4 +38,4 @@ const OrderSchema = new mongoose.Schema({
     },
 });
 
-module.exports =  mongoose.model('Order', OrderSchema);
+module.exports = mongoose.model('Order', OrderSchema);
